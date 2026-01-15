@@ -105,7 +105,11 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
       const guiSettings = loadApiSettings();
       
       if (!guiSettings || !guiSettings.baseUrl || !guiSettings.model) {
-        throw new Error('API settings not configured. Please set Base URL and Model in Settings.');
+        throw new Error('API settings not configured. Please set API Key, Base URL and Model in Settings (⚙️).');
+      }
+      
+      if (!guiSettings.apiKey) {
+        throw new Error('API Key is missing. Please configure it in Settings (⚙️).');
       }
 
       // Ensure baseURL ends with /v1 for OpenAI compatibility
@@ -695,8 +699,33 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         throw new Error('Max iterations reached');
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('[OpenAI Runner] Error:', error);
+      
+      // Extract detailed error message from API response
+      let errorMessage = String(error);
+      
+      // Try to extract more details from OpenAI error
+      if (error.error) {
+        errorMessage = JSON.stringify(error.error);
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // For 400 errors, try to get the response body
+      if (error.status === 400 && error.response) {
+        try {
+          const responseBody = await error.response.json();
+          if (responseBody.detail) {
+            errorMessage = `API Error: ${responseBody.detail}`;
+          } else {
+            errorMessage = `API Error (400): ${JSON.stringify(responseBody)}`;
+          }
+        } catch (parseError) {
+          // Response body not JSON or empty
+          errorMessage = `API Error (400): ${error.message || 'Bad Request'}`;
+        }
+      }
       
       onEvent({
         type: "session.status",
@@ -704,7 +733,7 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
           sessionId: session.id, 
           status: "error", 
           title: session.title, 
-          error: String(error) 
+          error: errorMessage 
         }
       });
     }

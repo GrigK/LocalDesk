@@ -63,6 +63,11 @@ bun install
 # or
 npm install
 
+# If you get "Cannot find module @rollup/rollup-darwin-arm64" error on macOS:
+# (This is a known npm bug with optional dependencies)
+rm -rf node_modules package-lock.json
+npm install
+
 # Compile Electron code
 npm run transpile:electron
 ```
