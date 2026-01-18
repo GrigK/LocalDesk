@@ -10,6 +10,7 @@ import type { Session } from "./session-store.js";
 import { loadApiSettings } from "./settings-store.js";
 import { TOOLS, getTools, getSystemPrompt } from "./tools-definitions.js";
 import { getInitialPrompt } from "./prompt-loader.js";
+import { getTodosSummary, getTodos } from "./tools/manage-todos-tool.js";
 import { ToolExecutor } from "./tools-executor.js";
 import { writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
@@ -186,10 +187,17 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
       // Load memory initially
       let memoryContent = await loadMemory();
       
+      // Build system prompt with optional todos
+      let systemContent = getSystemPrompt(currentCwd);
+      const todosSummary = getTodosSummary();
+      if (todosSummary) {
+        systemContent += todosSummary;
+      }
+      
       const messages: ChatMessage[] = [
         {
           role: 'system',
-          content: getSystemPrompt(currentCwd)
+          content: systemContent
         }
       ];
 
@@ -696,9 +704,18 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
           const result = await toolExecutor.executeTool(toolName, toolArgs);
 
           // If Memory tool was executed successfully, reload memory for next iteration
-          if (toolName === 'Memory' && result.success) {
+          if (toolName === 'manage_memory' && result.success) {
             console.log('[OpenAI Runner] Memory tool executed, reloading memory...');
             memoryContent = await loadMemory();
+          }
+          
+          // If manage_todos was executed, emit todos update event
+          if (toolName === 'manage_todos' && result.success) {
+            const todos = getTodos();
+            onEvent({
+              type: 'todos.updated',
+              payload: { sessionId: session.id, todos }
+            });
           }
 
           // Add tool result to messages

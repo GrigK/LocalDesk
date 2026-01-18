@@ -60,6 +60,14 @@ export type SessionInfo = {
   outputTokens?: number;
 };
 
+// Todo item type
+export type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export interface TodoItem {
+  id: string;
+  content: string;
+  status: TodoStatus;
+}
+
 // Server -> Client events
 export type ServerEvent =
   | { type: "stream.message"; payload: { sessionId: string; message: StreamMessage } }
@@ -72,7 +80,8 @@ export type ServerEvent =
   | { type: "runner.error"; payload: { sessionId?: string; message: string } }
   | { type: "settings.loaded"; payload: { settings: ApiSettings | null } }
   | { type: "models.loaded"; payload: { models: ModelInfo[] } }
-  | { type: "models.error"; payload: { message: string } };
+  | { type: "models.error"; payload: { message: string } }
+  | { type: "todos.updated"; payload: { sessionId: string; todos: TodoItem[] } };
 
 // Client -> Server events
 export type ClientEvent =

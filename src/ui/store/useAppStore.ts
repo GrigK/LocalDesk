@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ServerEvent, SessionStatus, StreamMessage } from "../types";
+import type { ServerEvent, SessionStatus, StreamMessage, TodoItem } from "../types";
 
 export type PermissionRequest = {
   toolUseId: string;
@@ -22,6 +22,7 @@ export type SessionView = {
   hydrated: boolean;
   inputTokens?: number;
   outputTokens?: number;
+  todos?: TodoItem[];
 };
 
 interface AppState {
@@ -295,6 +296,23 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       case "runner.error": {
         set({ globalError: event.payload.message });
+        break;
+      }
+
+      case "todos.updated": {
+        const { sessionId, todos } = event.payload;
+        set((state) => {
+          const existing = state.sessions[sessionId] ?? createSession(sessionId);
+          return {
+            sessions: {
+              ...state.sessions,
+              [sessionId]: {
+                ...existing,
+                todos
+              }
+            }
+          };
+        });
         break;
       }
     }

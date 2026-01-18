@@ -10,6 +10,7 @@ import { FileBrowser } from "./components/FileBrowser";
 import { PromptInput, usePromptActions } from "./components/PromptInput";
 import { MessageCard } from "./components/EventCard";
 import { AppFooter } from "./components/AppFooter";
+import { TodoPanel } from "./components/TodoPanel";
 import MDContent from "./render/markdown";
 
 function App() {
@@ -421,6 +422,13 @@ function App() {
             <div ref={messagesEndRef} />
           </div>
         </div>
+
+        {/* Todo Panel */}
+        {activeSession?.todos && activeSession.todos.length > 0 && (
+          <div className="px-4 pb-2">
+            <TodoPanel todos={activeSession.todos} />
+          </div>
+        )}
 
         <PromptInput sendEvent={sendEvent} />
       </main>
