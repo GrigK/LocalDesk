@@ -100,25 +100,15 @@ export class SchedulerService {
     console.log(`[Scheduler] Executing task: ${task.title} (${task.id})`);
 
     try {
-      // If task has a prompt, execute it and show status notifications
+      // Show single reminder notification
+      this.sendNotification(
+        'Reminder',
+        task.title
+      );
+
+      // Execute the task callback if there's a prompt (silently, no extra notifications)
       if (task.prompt) {
-        this.sendNotification(
-          `Executing: ${task.title}`,
-          'Running scheduled prompt...'
-        );
-
         await this.onTaskExecute(task);
-
-        this.sendNotification(
-          `Completed: ${task.title}`,
-          'Task finished successfully'
-        );
-      } else {
-        // For reminder-only tasks, just show the reminder
-        this.sendNotification(
-          task.title,
-          'Reminder'
-        );
       }
 
       // Remove from notified set
@@ -141,8 +131,8 @@ export class SchedulerService {
     } catch (error) {
       console.error(`[Scheduler] Error executing task ${task.id}:`, error);
       this.sendNotification(
-        `Error: ${task.title}`,
-        `Failed to execute task: ${error instanceof Error ? error.message : 'Unknown error'}`
+        'Error',
+        `Failed to execute: ${task.title}`
       );
     }
   }
