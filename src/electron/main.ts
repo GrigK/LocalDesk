@@ -29,7 +29,18 @@ app.on("ready", () => {
         trafficLightPosition: { x: 15, y: 18 }
     });
 
-    if (isDev()) mainWindow.loadURL(`http://localhost:${DEV_PORT}`)
+    if (isDev()) {
+        console.log('[Main] Loading dev URL:', `http://localhost:${DEV_PORT}`);
+        mainWindow.loadURL(`http://localhost:${DEV_PORT}`)
+        // Uncomment to open DevTools automatically:
+        // mainWindow.webContents.once('did-finish-load', () => {
+        //     console.log('[Main] Page loaded, opening DevTools');
+        //     mainWindow.webContents.openDevTools({ mode: 'detach' });
+        // });
+        mainWindow.webContents.on('did-fail-load', (_, errorCode, errorDescription) => {
+            console.error('[Main] Failed to load:', errorCode, errorDescription);
+        });
+    }
     else mainWindow.loadFile(getUIPath());
 
     // Register window with SessionManager for event routing
