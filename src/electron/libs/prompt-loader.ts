@@ -83,6 +83,7 @@ function getSandboxPackages(cwd: string): string[] {
 type PromptSettings = {
   enableZaiReader?: boolean;
   enableMemory?: boolean;
+  enableImageTools?: boolean;
 };
 
 /**
@@ -109,6 +110,9 @@ export function getSystemPrompt(cwd: string, settings?: PromptSettings | null): 
   const memoryLine = settings?.enableMemory || false
     ? '- `manage_memory` - Store/read long-term memory'
     : '';
+  const attachImageLine = settings?.enableImageTools
+    ? '- `attach_image` - Attach local image (converted to WebP for model input)'
+    : '';
   
   // Build skills section (dynamically generated based on enabled skills)
   const skillsSection = generateSkillsPromptSection();
@@ -128,6 +132,7 @@ export function getSystemPrompt(cwd: string, settings?: PromptSettings | null): 
     .replace(/{sandboxPackages}/g, sandboxPackagesInfo)
     .replace(/{read_page_line}/g, readPageLine)
     .replace(/{memory_line}/g, memoryLine)
+    .replace(/{attach_image_line}/g, attachImageLine)
     .replace(/{skills_section}/g, skillsSection);
 
   return template;
@@ -160,4 +165,3 @@ export function getInitialPrompt(task: string, memoryContent?: string): string {
 
 // Export constant version with default cwd for backward compatibility
 export const SYSTEM_PROMPT = getSystemPrompt(process.cwd());
-

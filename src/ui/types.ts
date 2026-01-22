@@ -141,6 +141,7 @@ export type ApiSettings = {
   enableBrowserTools?: boolean; // Enable browser_* tools (11 tools)
   enableDuckDuckGo?: boolean; // Enable search/search_news/search_images (no API key needed)
   enableFetchTools?: boolean; // Enable fetch/fetch_json/download tools
+  enableImageTools?: boolean; // Enable attach_image tool
   llmProviders?: LLMProviderSettings; // LLM providers and models configuration
 };
 
@@ -215,7 +216,7 @@ export type ServerEvent =
 // Client -> Server events
 export type ClientEvent =
   | { type: "session.start"; payload: { title: string; prompt: string; cwd?: string; model?: string; allowedTools?: string; threadId?: string; temperature?: number } }
-  | { type: "session.continue"; payload: { sessionId: string; prompt: string } }
+  | { type: "session.continue"; payload: { sessionId: string; prompt: string; retry?: boolean; retryReason?: string } }
   | { type: "session.stop"; payload: { sessionId: string; } }
   | { type: "session.delete"; payload: { sessionId: string; } }
   | { type: "session.pin"; payload: { sessionId: string; isPinned: boolean; } }

@@ -1,4 +1,4 @@
-import { BrowserWindow, shell } from "electron";
+import { BrowserWindow, powerMonitor, shell } from "electron";
 import type { ClientEvent, ServerEvent, MultiThreadTask } from "./types.js";
 // import { runClaude, type RunnerHandle } from "./libs/runner.js"; // Old Claude SDK runner
 import { runClaude, type RunnerHandle } from "./libs/runner-openai.js"; // New OpenAI SDK runner
@@ -24,6 +24,16 @@ const sessions = new SessionStore(DB_PATH);
 const schedulerStore = new SchedulerStore(sessions['db']); // Access the database
 const runnerHandles = new Map<string, RunnerHandle>();
 const multiThreadTasks = new Map<string, MultiThreadTask>();
+let suppressStreamEvents = false;
+
+app.on("ready", () => {
+  powerMonitor.on("lock-screen", () => {
+    suppressStreamEvents = true;
+  });
+  powerMonitor.on("unlock-screen", () => {
+    suppressStreamEvents = false;
+  });
+});
 
 // Make sessionStore and schedulerStore globally available for runner
 (global as any).sessionStore = sessions;
@@ -39,7 +49,9 @@ function broadcast(event: ServerEvent) {
 }
 
 function emit(event: ServerEvent) {
-  // Save to database (existing logic)
+  const isStreamEventMessage =
+    event.type === "stream.message" &&
+    (event.payload.message as any)?.type === "stream_event";
   if (event.type === "session.status") {
     sessions.updateSession(event.payload.sessionId, { status: event.payload.status });
 
@@ -72,7 +84,9 @@ function emit(event: ServerEvent) {
         );
       }
     }
-    sessions.recordMessage(event.payload.sessionId, event.payload.message);
+    if (!isStreamEventMessage) {
+      sessions.recordMessage(event.payload.sessionId, event.payload.message);
+    }
   }
   if (event.type === "stream.user_prompt") {
     sessions.recordMessage(event.payload.sessionId, {
@@ -80,7 +94,9 @@ function emit(event: ServerEvent) {
       prompt: event.payload.prompt
     });
   }
-
+  if (isStreamEventMessage && suppressStreamEvents) {
+    return;
+  }
   // Route event through SessionManager
   sessionManager.emit(event, broadcast);
 }
@@ -394,17 +410,33 @@ export async function handleClientEvent(event: ClientEvent, windowId: number) {
         });
     }
 
+    const isSamePrompt = session.lastPrompt === event.payload.prompt;
     sessions.updateSession(session.id, { status: "running", lastPrompt: event.payload.prompt });
     sessionManager.emitToWindow(windowId, {
       type: "session.status",
       payload: { sessionId: session.id, status: "running", title: sessionTitle, cwd: session.cwd, model: session.model }
     });
 
-    // Use emit() to save user_prompt to DB AND send to UI
-    emit({
-      type: "stream.user_prompt",
-      payload: { sessionId: session.id, prompt: event.payload.prompt }
-    });
+    if (event.payload.retry) {
+      emit({
+        type: "stream.message",
+        payload: {
+          sessionId: session.id,
+          message: {
+            type: "system",
+            subtype: "notice",
+            text: "Retrying the last request..."
+          } as any
+        }
+      });
+    }
+
+    if (!isSamePrompt) {
+      emit({
+        type: "stream.user_prompt",
+        payload: { sessionId: session.id, prompt: event.payload.prompt }
+      });
+    }
 
     runClaude({
       prompt: event.payload.prompt,

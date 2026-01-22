@@ -19,6 +19,7 @@ export * from "./grep-tool.js";
 export * from "./web-search.js";
 export * from "./extract-page-content.js";
 export * from "./zai-reader.js";
+export * from "./attach-image-tool.js";
 export * from "./fetch-tool.js";
 export * from "./browser-tool.js";
 export * from "./duckduckgo-search-tool.js";
@@ -57,6 +58,7 @@ import { GrepToolDefinition } from "./grep-tool.js";
 import { WebSearchToolDefinition } from "./web-search.js";
 import { ExtractPageContentToolDefinition } from "./extract-page-content.js";
 import { ZaiReaderToolDefinition } from "./zai-reader.js";
+import { AttachImageToolDefinition } from "./attach-image-tool.js";
 import { MemoryToolDefinition } from "./memory-tool.js";
 import { ExecuteJSToolDefinition } from "./execute-js-tool.js";
 import { ReadDocumentToolDefinition } from "./read-document-tool.js";
@@ -79,6 +81,7 @@ export const ALL_TOOL_DEFINITIONS = [
   WebSearchToolDefinition,
   ExtractPageContentToolDefinition,
   ZaiReaderToolDefinition,
+  AttachImageToolDefinition,
   MemoryToolDefinition,
   ExecuteJSToolDefinition,
   ReadDocumentToolDefinition,

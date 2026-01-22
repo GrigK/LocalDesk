@@ -17,6 +17,7 @@ import { executeGrepTool } from "./tools/grep-tool.js";
 import { WebSearchTool } from "./tools/web-search.js";
 import { ExtractPageContentTool } from "./tools/extract-page-content.js";
 import { ZaiReaderTool } from "./tools/zai-reader.js";
+import { executeAttachImageTool } from "./tools/attach-image-tool.js";
 import { executeMemoryTool } from "./tools/memory-tool.js";
 import { executeJSTool } from "./tools/execute-js-tool.js";
 import { executeReadDocumentTool } from "./tools/read-document-tool.js";
@@ -271,6 +272,7 @@ export class ToolExecutor {
       "read_document",
       "download",
       "browser_screenshot",
+      "attach_image",
     ];
     if (fileOperationTools.includes(toolName)) {
       if (!this.cwd || this.cwd === "." || this.cwd === "") {
@@ -315,6 +317,9 @@ export class ToolExecutor {
 
         case "read_page":
           return await this.executeZaiReader(args);
+
+        case "attach_image":
+          return await executeAttachImageTool(args as any, context);
 
         case "manage_memory":
           return await executeMemoryTool(args as any, context);
